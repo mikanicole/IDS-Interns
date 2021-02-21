@@ -1,0 +1,125 @@
+---
+title: "Worksheet #3"
+subtitle: "By Mika Mildenberger"
+output: html_notebook
+---
+
+
+TASK 1
+
+Activate the gutenbergr, tidytext, tidyverse and udpipe packages, and load the "stop_words" data set.
+
+```{r}
+library(gutenbergr)
+library(tidytext)
+library(tidyverse)
+library(udpipe)
+
+#load the data set
+data("stop_words")
+
+```
+
+
+TASK 2
+
+Using the *gutenbergr* package, create a data set consisting of the works with Hercule Poirot as their subject.  (Hercule Poirot is the creation of one of the most famous detective novelists of all time, Agatha Christie.)  I break this task down into three steps.  I've started the process for you in the code below.
+
+STEP 1
+
+```{r}
+# Looking for all subjects I want to find
+poirot_PG_work <- gutenberg_subjects %>%
+  filter(subject == "Poirot, Hercule (Fictitious character) -- Fiction")
+
+#create a vector with just the ID information
+poirot_ids <- poirot_PG_work$gutenberg_id
+
+#A Question for Dr. Glimp: Is there only supposed to be one novel in this group? I can only seem to find
+#one Hercule Poirot novel in this set.
+  
+```
+
+STEP 2
+
+Now, using the poirot_ids object created immediately above, write the code needed to create an object that includes all of the Poirot mysteries dowloadable from Projet Gutenberg.
+
+```{r}
+#loading the corpus using the ID vector created above
+poirot_corpus <- gutenberg_download(poirot_ids, mirror = "http://mirrors.xmission.com/gutenberg/")
+
+```
+
+
+TASK 3
+
+Create a customized stop word list using the "snowball" lexicon in the "stop words" data set you loaded in Task 1.
+
+```{r}
+#filter for just snowball lexicon
+
+snowball <- stop_words%>%
+  filter(lexicon == "snowball")
+
+```
+
+TASK 4
+
+Using the udpipe package, load the necessary English language model you will need to POS tag your corpus.  (In the week 4 walkthrough, this is the two lines of code that create the ud_model object.)
+
+```{r}
+ud_model <- udpipe_download_model(language = "english")
+ud_model <- udpipe_load_model(ud_model$file_model)
+
+```
+
+TASK 5
+
+Create a new data object that contains the part of speech tags for the Hercule Poirot corpus you created in Task 2.
+
+```{r}
+#apply the udpipe_annotate
+poirot_pos <- udpipe_annotate(ud_model, x = poirot_corpus$text, doc_id = poirot_corpus$gutenberg_id)
+
+#make into a readable and workable data frame
+poirot_pos <- as.data.frame(poirot_pos)
+
+```
+
+TASK 6
+
+Create a new data object that just contains the adjectives from the data generated in the previous step.
+
+```{r}
+#filter for just the adjectives
+poirot_adj <- poirot_pos%>%
+  filter(upos == "ADJ")
+
+#get rid of excess columns I don't want to look at
+poirot_adj <- poirot_adj[, c(1,4,6:8)]
+
+```
+
+
+TASK 7
+
+Write the code to count the number of occurrences of each word/adjective in the data object created in the previous step. Make sure to assign that count to a new data object. 
+
+```{r}
+
+#Here I am filtering for the adjectives in their token form
+pt_adj_count <- poirot_adj%>%
+  count(token, sort = TRUE)
+
+#here I filter for the lemma, or root of each adjective instead (just for curiosity's sake)
+pl_adj_count <- poirot_adj%>%
+  count(lemma, sort = TRUE)
+
+
+
+
+```
+
+
+
+
